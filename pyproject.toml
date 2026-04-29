@@ -1,12 +1,12 @@
 [tool.poetry]
-name        = "BlockyMetamaterials"
+name        = "dynamic-conformal-metamaterials"
 version     = "0.1.0"
-description = "Differentiable simulations for metamaterials"
-authors     = ["Giovanni Bordiga <gbordiga@seas.harvard.edu>"]
+description = "Simulations for dynamic conformal metamaterials"
+authors     = ["Giovanni Bordiga <gbordiga@seas.harvard.edu> and Audrey Watkins <audreywatkins@g.harvard.edu>"]
 readme      = "README.md"
-homepage    = "https://github.com/bertoldi-collab/BlockyMetamaterials"
-repository  = "https://github.com/bertoldi-collab/BlockyMetamaterials"
-keywords    = ["mechanical-metamaterials", "automatic-differentiation"]
+homepage    = "https://github.com/bertoldi-collab/dynamic-conformal-metamaterials"
+repository  = "https://github.com/bertoldi-collab/dynamic-conformal-metamaterials"
+keywords    = ["mechanical-metamaterials"]
 
 [tool.poetry.dependencies]
 python        = ">=3.8,<3.12"
