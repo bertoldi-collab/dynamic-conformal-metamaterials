@@ -1,0 +1,31 @@
+[tool.poetry]
+name        = "BlockyMetamaterials"
+version     = "0.1.0"
+description = "Differentiable simulations for metamaterials"
+authors     = ["Giovanni Bordiga <gbordiga@seas.harvard.edu>"]
+readme      = "README.md"
+homepage    = "https://github.com/bertoldi-collab/BlockyMetamaterials"
+repository  = "https://github.com/bertoldi-collab/BlockyMetamaterials"
+keywords    = ["mechanical-metamaterials", "automatic-differentiation"]
+
+[tool.poetry.dependencies]
+python        = ">=3.8,<3.12"
+jax-md        = "^0.2.5"
+matplotlib    = "^3.5.0"
+ipykernel     = "^6.5.1"
+SciencePlots  = "^1.0.9"
+ipywidgets    = "^7.6.5"
+tqdm          = "^4.62.3"
+opencv-python = "^4.5.5"
+ipympl        = "^0.9.1"
+nlopt         = "^2.7.1"
+pandas        = "^1.4.4"
+Shapely       = "^1.8.4"
+
+[tool.poetry.dev-dependencies]
+pytest   = "^5.2"
+autopep8 = "^1.5.7"
+
+[build-system]
+requires      = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
