@@ -14,10 +14,7 @@ pip install git+ssh://git@github.com/bertoldi-collab/dynamic-conformal-metamater
 
 ## First steps
 
-The package is still under heavy development, but you can already use it to simulate a few 2D blocky metamaterials.
-You can start by:
-
-- Having a look at the file [`main.py`](blockymetamaterials/main.py). This file contains a simple example of how to use the package and it is supposed to work just by running it.
+You can find supporting data at [Zenodo](https://doi.org/10.5281/zenodo.19958454).
 
 ## Dev notes
 
