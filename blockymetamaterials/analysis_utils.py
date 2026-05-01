@@ -641,7 +641,7 @@ def response_funcn(coeffs, modes, lamdas, timepoints):
 # ==============================================================================
 
 # Convert block displacements to unit cell displacements
-def unitcell_data(data: SolutionType, geometry = None, mode_range = None, n1_blocks=0, n2_blocks=0):
+def unitcell_data(data, geometry = None, mode_range = None, n1_blocks=0, n2_blocks=0):
 
     """ Takes in SolutionType, geometry and mode_range, and spits out ndarray of unit cell displacements for those modes
     """
