@@ -121,31 +121,21 @@ def build_constrained_kinematics_energy_RHS(
     else:
         def bond_damping_fn(state, t, control_params): return 0
 
-    # # Combine all loading functions
-    # def loading_fn_total(state, t, control_params):
-    #     loading_params = control_params.loading_params
-    #     damping = control_params.mechanical_params.damping
-
-    #     # state_ = (jnp.zeros(1116), state[1])
-    #     state_ = state
-    #     return _loading_fn(state, t, loading_params) + damping_fn(state, t, damping) + bond_damping_fn(state_, t, control_params)
-
-
-    hessian_fn = hessian(energy_fn) # take the hessian of the energy function
-    def energy_fn_lin_fn(block_displacements, control_params):
-
-        state0_disp=jnp.zeros([384,3])
-
-        stiffness_matrix = hessian_fn(state0_disp, control_params) #(384,3,384,3)
-        block_displacements_reshaped = block_displacements.reshape(-1)
-        stiffness_matrix_reshaped = stiffness_matrix.reshape((384*3, 384*3))
-        stiffness_matrix_free = stiffness_matrix_reshaped
-
-
-        energy_lin = (block_displacements_reshaped.T)@(stiffness_matrix_free@block_displacements_reshaped)/2
-        return energy_lin
 
 ################# Linear ##############
+    # hessian_fn = hessian(energy_fn) # take the hessian of the energy function
+    # def energy_fn_lin_fn(block_displacements, control_params):
+
+    #     state0_disp=jnp.zeros([384,3])
+
+    #     stiffness_matrix = hessian_fn(state0_disp, control_params) #(384,3,384,3)
+    #     block_displacements_reshaped = block_displacements.reshape(-1)
+    #     stiffness_matrix_reshaped = stiffness_matrix.reshape((384*3, 384*3))
+    #     stiffness_matrix_free = stiffness_matrix_reshaped
+
+
+    #     energy_lin = (block_displacements_reshaped.T)@(stiffness_matrix_free@block_displacements_reshaped)/2
+    #     return energy_lin
     # # Combine all loading functions
     # def loading_fn_total(state, t, control_params):
     #     loading_params = control_params.loading_params

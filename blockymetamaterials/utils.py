@@ -111,19 +111,6 @@ class ContactParams(NamedTuple):
     k_contact: Any
 
 
-class MagneticParams(NamedTuple):
-    """Magnetic parameters of the system.
-
-    These are meant to be used with the magnetic energy functions defined in `blockymetamaterials.energy`.
-
-    Attrs:
-        dipole_angles (jnp.ndarray): Array of shape (n_dipoles, 2) representing the initial (reference) angles (in_plane_angle, pitch) of each dipole.
-        dipole_strengths (jnp.ndarray): Either a scalar or an array of shape (n_dipoles,) representing the magnitude of the magnetic moment of each dipole.
-    """
-
-    dipole_angles: Any
-    dipole_strengths: Any
-
 
 class MechanicalParams(NamedTuple):
     """Mechanical parameters of the system.
@@ -160,7 +147,6 @@ class ControlParams(NamedTuple):
 
     geometrical_params: GeometricalParams  # centroids and centroid_node_vectors
     mechanical_params: MechanicalParams  # bond params, mass density, damping
-    magnetic_params: Optional[MagneticParams] = None  # dipole angles, dipole moments
     loading_params: Dict = dict()
     constraint_params: Dict = dict()
 

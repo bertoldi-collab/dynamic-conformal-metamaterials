@@ -48,27 +48,6 @@ def build_loading(
     return global_loading_fn
 
 
-def build_node_loading(
-        geometry: Geometry,
-        loaded_block_node_DOF_triples: jnp.ndarray,
-        loading_fn: Callable,
-        centroid_node_vectors: jnp.ndarray,
-        constrained_block_DOF_pairs: jnp.ndarray = jnp.array([])):
-    """
-    docstring
-    """
-
-    # TODO: Implement nodal loading function in one of the following ways:
-    #   - Compute virtual power and let jax take the gradient with respect to virtual velocity.
-    #   - Find the appropriate way to vectorize something like (A_n)^T . F_n where A_n is the gradient of n node displacement with respect to block DOFs and F_n the nodal loading.
-    # In both cases, be sure to constrained the resulting loading vector to the freeDOFs using constraints info.
-
-    # node_displacements = block_to_node_kinematics(
-    #     block_displacement,
-    #     centroid_node_vectors
-    # )
-
-
 def build_viscous_damping(
         geometry: Geometry,
         damped_blocks: jnp.ndarray,
@@ -150,38 +129,6 @@ def build_bond_viscous_damping(
         in_axes=(0, 0)
     )
 
-    ############ original #############
-    # def block_viscous_potential_fn(block_DOFs, block_DOFs_dot, control_params: ControlParams):
-    #     nodal_DOFs = block_to_node_kinematics(
-    #         block_DOFs, control_params.geometrical_params.centroid_node_vectors
-    #     ).reshape(geometry.n_nodes, 3)
-    #     nodal_DOFs_dot = block_to_node_kinematics_velocity(
-    #         block_DOFs_dot, control_params.geometrical_params.centroid_node_vectors
-    #     ).reshape(geometry.n_nodes, 3)
-    #     return viscous_potential_fn(
-    #         nodal_DOFs,
-    #         nodal_DOFs_dot,
-    #         control_params.mechanical_params.internal_damping,
-    #         control_params.mechanical_params.bond_params.reference_vector
-    #     )
-
-    ########### incorrectly fixed ############
-    # def block_viscous_potential_fn(block_DOFs, block_DOFs_dot, control_params: ControlParams):
-    #     nodal_DOFs = block_to_node_kinematics(
-    #         block_DOFs, control_params.geometrical_params.centroid_node_vectors
-    #     )
-    #     centroid_node_vectors_current = control_params.geometrical_params.centroid_node_vectors + nodal_DOFs[:, :, :2]
-    #     nodal_DOFs_dot = block_to_node_kinematics_velocity(
-    #     block_DOFs_dot, centroid_node_vectors_current
-    #     )
-    #     return viscous_potential_fn(
-    #         nodal_DOFs.reshape(geometry.n_nodes, 3),
-    #         nodal_DOFs_dot.reshape(geometry.n_nodes, 3),
-    #         control_params.mechanical_params.internal_damping,
-    #         control_params.mechanical_params.bond_params.reference_vector
-    #     )
-
-    ######### fixed ###############
     def current_centroid_node_vectors_fn(block_rotations, centroid_node_vectors):
         return vmap(lambda R, c: (rotation_matrix(R)@c.T).T, in_axes=(0, 0))(block_rotations, centroid_node_vectors)
 

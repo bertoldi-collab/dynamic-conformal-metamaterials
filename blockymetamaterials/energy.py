@@ -191,9 +191,6 @@ def strain_energy_bond(bond_connectivity: jnp.ndarray, bond_energy_fn: Callable 
     )
 
 
-# Contact energy between adjacent edges
-# NOTE: This is a simplified way to handle contact. The energy is just based on the angle between blocks connected by a bond.
-# NOTE: This is also not based on general data structures for defining edges (see geometry.compute_edge_angles).
 
 def void_angles(current_block_nodes: jnp.ndarray, bond_connectivity: jnp.ndarray):
     """Computes angles between blocks connected by the bonds.
@@ -374,14 +371,12 @@ def build_contact_energy(bond_connectivity: jnp.ndarray, angle_based=True):
         block_centroids = control_params.geometrical_params.block_centroids
         centroid_node_vectors = control_params.geometrical_params.centroid_node_vectors
         contact_params = control_params.mechanical_params.contact_params
-        # print('in contact_energy_fn...')
         node_displacements = jnp.array(
             block_to_node_kinematics(
                 block_displacement,
                 centroid_node_vectors
             )
         )[:, :, :2]
-        # print('still in contact_energy_fn')
         current_block_nodes = block_centroids[:, None] + centroid_node_vectors + node_displacements
         return jnp.sum(contact_energy(current_void_angles=distance_fn(current_block_nodes), **contact_params._asdict()))
 
@@ -443,8 +438,6 @@ def combine_block_energies(*energy_fns: Callable):
         # But, a for loop should be fine as the number of energy functions is small, so unrolling the loop should not be a problem.
         energy = jnp.array(0.)
         for energy_fn in energy_fns:
-            # print('in combined_energy_fn')
-            # print('block_displacement.shape = ', block_displacement.shape)
             energy += energy_fn(block_displacement, control_params)
         return energy
 
@@ -465,8 +458,6 @@ def constrain_energy(energy_fn: Callable, constrained_kinematics: Callable):
 
     
     def constrained_energy_fn(free_DOFs, t, control_params: ControlParams):
-        # print('constrained_kinematics(free_DOFs, t, control_params).shape = ', constrained_kinematics(free_DOFs, t, control_params).shape)
-        # print('constrained_kinematics(free_DOFs, t, control_params).reshape(-1) = ', constrained_kinematics(free_DOFs, t, control_params).reshape(-1).shape)
         return energy_fn(
             constrained_kinematics(free_DOFs, t, control_params),
             control_params
@@ -482,103 +473,6 @@ def kinetic_energy(block_velocity, inertia):
     """
 
     return jnp.sum(inertia * block_velocity**2 / 2)
-
-
-def magnetic_dipole_pair_energy(
-        dipole_configuration_1: jnp.ndarray,
-        magnetic_moment_strength_1: jnp.ndarray,
-        dipole_configuration_2: jnp.ndarray,
-        magnetic_moment_strength_2: jnp.ndarray,
-        mu0):
-    """Computes the magnetic energy of a single pair of dipoles.
-
-    Args:
-        dipole_configuration_1 (jnp.ndarray): array of shape (4,) representing the location (x,y) and rotation and pitch of the first dipole.
-        magnetic_moment_strength_1 : magnetic dipole strength of the first dipole
-        dipole_configuration_2 (jnp.ndarray): array of shape (4,) representing the location (x,y) and rotation and pitch of the second dipole.
-        magnetic_moment_strength_2 : magnetic dipole strength of the second dipole
-
-    Returns:
-        float: Magnetic energy of the dipole pair.
-    """
-
-    m1 = magnetic_moment_strength_1 * \
-        jnp.array([jnp.cos(dipole_configuration_1[2])*jnp.cos(dipole_configuration_1[3]),
-                  jnp.sin(dipole_configuration_1[2])*jnp.cos(dipole_configuration_1[3]), jnp.sin(dipole_configuration_1[3])])
-    m2 = magnetic_moment_strength_2 * \
-        jnp.array([jnp.cos(dipole_configuration_2[2])*jnp.cos(dipole_configuration_2[3]),
-                  jnp.sin(dipole_configuration_2[2])*jnp.cos(dipole_configuration_2[3]), jnp.sin(dipole_configuration_2[3])])
-    r = jnp.array([*(dipole_configuration_2[:2] - dipole_configuration_1[:2]), 0])
-    r_norm = jnp.where(jnp.sum(r**2) > 0., jnp.sum(r**2), 1.)**0.5  # Safe way to avoid nan in the gradient
-    r_unit = r / r_norm
-
-    return -mu0/(4*jnp.pi*r_norm**3) * (3*jnp.dot(m1, r_unit)*jnp.dot(m2, r_unit) - jnp.dot(m1, m2))
-
-
-magnetic_dipole_pair_energy_mapped = vmap(
-    vmap(
-        # vectorize over all of the first dipoles keeping the second dipole fixed (last None is the mu0 constant)
-        magnetic_dipole_pair_energy, in_axes=(0, 0, None, None, None)
-    ),
-    # vectorize over all of the second dipoles keeping the first ones fixed (last None is the mu0 constant)
-    in_axes=(None, None, 0, 0, None)
-)
-
-
-def magnetic_energy(dipole_configuration: jnp.ndarray, magnetic_moment_strength: jnp.ndarray, mu0=1.):
-    """Computes the energy due to all pairwise interactions between dipoles.
-
-    Args:
-        dipole_configuration (jnp.ndarray): Array of shape (n_dipoles, 4) representing the configuration of the dipoles (x , y, in_plane_angle, pitch).
-        magnetic_moment_strength (jnp.ndarray): Either a scalar or an array of shape (n_dipoles,).
-        mu0 (float, optional): Magnetic permeability. Defaults to 1..
-
-    Returns:
-        float: Magnetic energy of all the dipoles.
-    """
-
-    energy_pairs = magnetic_dipole_pair_energy_mapped(
-        dipole_configuration, magnetic_moment_strength,
-        dipole_configuration, magnetic_moment_strength,
-        mu0
-    )
-    # Make sure diagonal terms are killed!
-    energy_pairs = energy_pairs.at[jnp.diag_indices_from(energy_pairs)].set(0.)
-    return jnp.sum(energy_pairs / 2)
-
-
-def build_magnetic_energy(magnetic_block_ids: jnp.ndarray, mu0=1.):
-    """Defines the magnetic energy functional of the system.
-
-    Args:
-        magnetic_block_ids (jnp.ndarray): Array of shape (n_dipoles,) containing the indices of the blocks that have magnetic dipoles.
-        mu0 (float, optional): Magnetic permeability. Defaults to 1..
-
-    Returns:
-        Callable: Function evaluating the total magnetic energy with signature (block_displacement, control_params) -> energy.
-    """
-
-    def magnetic_energy_fn(block_displacements: jnp.ndarray, control_params: ControlParams):
-        """Computes total magnetic energy due to all pairwise interactions between dipoles.
-
-        Args:
-            block_displacement (ndarray): array of shape (n_blocks, 3) collecting the displacements (first two positions) and rotations (last position) of all the blocks.
-            control_params (ControlParams): contains the geometrical params in control_params.geometrical_params, as well as the magnetic params in control_params.magnetic_params.
-
-        Returns:
-            float: Total strain energy.
-        """
-
-        dipole_configuration = block_to_dipole_configuration(
-            block_displacements,
-            control_params.geometrical_params.block_centroids,
-            control_params.magnetic_params.dipole_angles,
-            magnetic_block_ids
-        )
-
-        return magnetic_energy(dipole_configuration, control_params.magnetic_params.dipole_strengths, mu0=mu0)
-
-    return magnetic_energy_fn
 
 
 def compute_ligament_strains(block_displacement, centroid_node_vectors, bond_connectivity, reference_bond_vectors):
